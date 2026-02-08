@@ -105,7 +105,7 @@ def main() -> int:
             pose = CarPose(x=car.x, y=car.y, angle=car.angle)
             renderer.draw_car(renderer.screen, pose)
             rays_data = sensors.cast(car, track)
-            renderer.draw_sensors(renderer.screen, rays_data)
+            renderer.draw_sensors(renderer.screen, rays_data, danger_distance=sensors.danger_distance)
 
             speed_kmh = car.velocity * 3.6
             velocity_text = f"Velocity: {car.velocity:.1f} px/s ({speed_kmh:.1f} km/h)"
