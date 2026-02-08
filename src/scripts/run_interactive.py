@@ -9,6 +9,7 @@ import pygame
 
 from src.render.pygame_renderer import PygameRenderer
 from src.sim.state import CarPose
+from src.sim.track import Track
 
 
 WINDOW_WIDTH = 800
@@ -24,6 +25,16 @@ def main() -> int:
     renderer = PygameRenderer(width=WINDOW_WIDTH, height=WINDOW_HEIGHT)
     pygame.display.set_caption(WINDOW_TITLE)
     pose = CarPose(x=WINDOW_WIDTH / 2, y=WINDOW_HEIGHT / 2, angle=0.0)
+    track = Track(
+        centerline=[
+            (120.0, 420.0),
+            (260.0, 360.0),
+            (420.0, 320.0),
+            (580.0, 260.0),
+            (700.0, 180.0),
+        ],
+        road_width=140.0,
+    )
 
     try:
         running = True
@@ -42,6 +53,7 @@ def main() -> int:
                 pose.angle += ROTATION_SPEED * dt
 
             renderer.screen.fill(BACKGROUND_COLOR)
+            renderer.draw_track(renderer.screen, track)
             renderer.draw_car(renderer.screen, pose)
             pygame.display.flip()
     finally:

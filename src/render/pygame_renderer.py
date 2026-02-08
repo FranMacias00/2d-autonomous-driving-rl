@@ -9,6 +9,7 @@ from typing import Iterable, List, Tuple
 import pygame
 
 from src.sim.state import CarPose
+from src.sim.track import Track
 
 
 Point = Tuple[float, float]
@@ -92,3 +93,10 @@ class PygameRenderer:
         pygame.draw.polygon(surface, (80, 180, 240), cabin_points)
         for wheel in wheel_points:
             pygame.draw.polygon(surface, (10, 10, 10), wheel)
+
+    def draw_track(self, surface: pygame.Surface, track: Track) -> None:
+        left_border, right_border = track.get_borders()
+        pygame.draw.lines(surface, (255, 255, 255), False, left_border, 3)
+        pygame.draw.lines(surface, (255, 255, 255), False, right_border, 3)
+        pygame.draw.line(surface, (220, 40, 40), left_border[-1], right_border[-1], 10)
+        pygame.draw.lines(surface, (140, 140, 140), False, track.centerline, 1)
