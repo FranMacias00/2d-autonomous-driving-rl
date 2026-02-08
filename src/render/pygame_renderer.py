@@ -1,0 +1,94 @@
+"""Pygame rendering utilities."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+import math
+from typing import Iterable, List, Tuple
+
+import pygame
+
+from src.sim.state import CarPose
+
+
+Point = Tuple[float, float]
+
+
+@dataclass
+class CarGeometry:
+    """Geometry dimensions for the top-down car drawing."""
+
+    length: float = 80.0
+    width: float = 40.0
+    cabin_length: float = 40.0
+    cabin_width: float = 26.0
+    wheel_length: float = 16.0
+    wheel_width: float = 8.0
+    wheel_offset_x: float = 28.0
+    wheel_offset_y: float = 18.0
+
+
+class PygameRenderer:
+    """Renderer for drawing a simple top-down car using Pygame primitives."""
+
+    def __init__(self, width: int = 800, height: int = 600) -> None:
+        pygame.init()
+        self.width = width
+        self.height = height
+        self.screen = pygame.display.set_mode((width, height))
+        self.clock = pygame.time.Clock()
+        self.geometry = CarGeometry()
+
+    @staticmethod
+    def _rotate_point(point: Point, angle: float) -> Point:
+        cos_a = math.cos(angle)
+        sin_a = math.sin(angle)
+        x, y = point
+        return (x * cos_a - y * sin_a, x * sin_a + y * cos_a)
+
+    @classmethod
+    def _transform_points(cls, points: Iterable[Point], pose: CarPose) -> List[Point]:
+        transformed: List[Point] = []
+        for point in points:
+            rotated = cls._rotate_point(point, pose.angle)
+            transformed.append((rotated[0] + pose.x, rotated[1] + pose.y))
+        return transformed
+
+    @staticmethod
+    def _rect_points(center: Point, length: float, width: float) -> List[Point]:
+        cx, cy = center
+        half_l = length / 2.0
+        half_w = width / 2.0
+        return [
+            (cx - half_l, cy - half_w),
+            (cx + half_l, cy - half_w),
+            (cx + half_l, cy + half_w),
+            (cx - half_l, cy + half_w),
+        ]
+
+    def draw_car(self, surface: pygame.Surface, pose: CarPose) -> None:
+        geometry = self.geometry
+
+        chassis = self._rect_points((0.0, 0.0), geometry.length, geometry.width)
+        cabin_center = (-geometry.length * 0.1, 0.0)
+        cabin = self._rect_points(cabin_center, geometry.cabin_length, geometry.cabin_width)
+
+        wheel_offsets = [
+            (geometry.wheel_offset_x, geometry.wheel_offset_y),
+            (geometry.wheel_offset_x, -geometry.wheel_offset_y),
+            (-geometry.wheel_offset_x, geometry.wheel_offset_y),
+            (-geometry.wheel_offset_x, -geometry.wheel_offset_y),
+        ]
+        wheels = [
+            self._rect_points(offset, geometry.wheel_length, geometry.wheel_width)
+            for offset in wheel_offsets
+        ]
+
+        chassis_points = self._transform_points(chassis, pose)
+        cabin_points = self._transform_points(cabin, pose)
+        wheel_points = [self._transform_points(wheel, pose) for wheel in wheels]
+
+        pygame.draw.polygon(surface, (30, 130, 200), chassis_points)
+        pygame.draw.polygon(surface, (80, 180, 240), cabin_points)
+        for wheel in wheel_points:
+            pygame.draw.polygon(surface, (10, 10, 10), wheel)
