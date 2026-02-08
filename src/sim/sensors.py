@@ -47,12 +47,14 @@ class SensorSuite:
         q = segment[0]
         s = (segment[1][0] - segment[0][0], segment[1][1] - segment[0][1])
         denominator = self._cross(r, s)
-        if denominator == 0.0:
+        if abs(denominator) < 1e-9:
             return None
 
         qp = (q[0] - p[0], q[1] - p[1])
         t = self._cross(qp, s) / denominator
         u = self._cross(qp, r) / denominator
+        if t > self.max_range:
+            return None
         if t >= 0.0 and 0.0 <= u <= 1.0:
             hit_point = (p[0] + t * r[0], p[1] + t * r[1])
             return t, hit_point

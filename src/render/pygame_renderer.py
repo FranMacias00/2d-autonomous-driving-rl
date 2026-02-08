@@ -112,11 +112,20 @@ class PygameRenderer:
         text_surface = self.font.render(text, True, color)
         surface.blit(text_surface, position)
 
-    def draw_sensors(self, surface: pygame.Surface, rays_data: List[dict]) -> None:
+    def draw_sensors(
+        self,
+        surface: pygame.Surface,
+        rays_data: List[dict],
+        danger_distance: float = 50.0,
+    ) -> None:
         for ray in rays_data:
             distance = ray["distance"]
             hit_point = ray["hit_point"]
-            color = (40, 200, 40) if distance >= 50.0 or hit_point is None else (220, 40, 40)
+            color = (
+                (40, 200, 40)
+                if distance >= danger_distance or hit_point is None
+                else (220, 40, 40)
+            )
             pygame.draw.line(surface, color, ray["start_pos"], ray["end_pos"], 2)
             if hit_point is not None:
                 pygame.draw.circle(surface, color, hit_point, 3)
