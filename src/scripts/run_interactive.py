@@ -65,6 +65,12 @@ def main() -> int:
     start_x, start_y = track.centerline[0]
     next_x, next_y = track.centerline[1]
     start_angle = math.atan2(next_y - start_y, next_x - start_x)
+
+    # Move the spawn forward so the whole bounding box starts inside the road.
+    spawn_forward = 60.0  # px (tune: 50–80)
+    start_x += math.cos(start_angle) * spawn_forward
+    start_y += math.sin(start_angle) * spawn_forward
+
     car = Car(x=start_x, y=start_y, angle=start_angle)
     spawn_pose = (start_x, start_y, start_angle)
     sensors = SensorSuite()
