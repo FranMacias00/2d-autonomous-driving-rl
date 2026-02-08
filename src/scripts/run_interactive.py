@@ -4,12 +4,13 @@ Visual validation: render car + a non-self-intersecting curvy track.
 Run with: python -m src.scripts.run_interactive
 """
 
-import sys
 import math
+import sys
 
 import pygame
 
 from src.render.pygame_renderer import PygameRenderer
+from src.sim.car import Car
 from src.sim.state import CarPose
 from src.sim.track import Track
 
@@ -19,7 +20,6 @@ WINDOW_HEIGHT = 600
 WINDOW_TITLE = "Autonomous Driving 2D"
 FPS = 60
 BACKGROUND_COLOR = (20, 20, 20)
-ROTATION_SPEED = 1.5  # rad/s
 
 
 def make_centerline(
@@ -50,8 +50,6 @@ def main() -> int:
     renderer = PygameRenderer(width=WINDOW_WIDTH, height=WINDOW_HEIGHT)
     pygame.display.set_caption(WINDOW_TITLE)
 
-    pose = CarPose(x=WINDOW_WIDTH / 2, y=WINDOW_HEIGHT / 2, angle=0.0)
-
     # Curvy, larger track without overlaps
     track = Track(
         centerline=make_centerline(
@@ -62,7 +60,11 @@ def main() -> int:
         ),
         road_width=110.0,     # antes 140
     )
-    
+
+    start_x, start_y = track.centerline[0]
+    next_x, next_y = track.centerline[1]
+    start_angle = math.atan2(next_y - start_y, next_x - start_x)
+    car = Car(x=start_x, y=start_y, angle=start_angle)
 
     try:
         running = True
@@ -76,14 +78,36 @@ def main() -> int:
                     running = False
 
             keys = pygame.key.get_pressed()
-            if keys[pygame.K_LEFT]:
-                pose.angle -= ROTATION_SPEED * dt
-            if keys[pygame.K_RIGHT]:
-                pose.angle += ROTATION_SPEED * dt
+            if keys[pygame.K_w]:
+                car.throttle = 1.0
+            elif keys[pygame.K_s]:
+                car.throttle = -1.0
+            else:
+                car.throttle = 0.0
+
+            if keys[pygame.K_a]:
+                car.steering = -1.0
+            elif keys[pygame.K_d]:
+                car.steering = 1.0
+            else:
+                if car.steering > 0.0:
+                    car.steering = max(0.0, car.steering - car.steering_return_rate * dt)
+                elif car.steering < 0.0:
+                    car.steering = min(0.0, car.steering + car.steering_return_rate * dt)
+
+            car.step(dt)
 
             renderer.screen.fill(BACKGROUND_COLOR)
             renderer.draw_track(renderer.screen, track)
+
+            pose = CarPose(x=car.x, y=car.y, angle=car.angle)
             renderer.draw_car(renderer.screen, pose)
+
+            speed_kmh = car.velocity * 3.6
+            velocity_text = f"Velocity: {car.velocity:.1f} px/s ({speed_kmh:.1f} km/h)"
+            angle_text = f"Angle: {car.angle:.2f} rad"
+            renderer.draw_text(renderer.screen, velocity_text, (20, 20))
+            renderer.draw_text(renderer.screen, angle_text, (20, 45))
             pygame.display.flip()
 
     finally:
