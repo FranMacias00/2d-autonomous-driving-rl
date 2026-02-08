@@ -1,0 +1,6 @@
+# Entorno virtual
+.venv/
+
+# Python (en cualquier carpeta)
+**/__pycache__/
+*.pyc
