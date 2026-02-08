@@ -7,39 +7,43 @@ import sys
 
 import pygame
 
+from src.render.pygame_renderer import PygameRenderer
+from src.sim.state import CarPose
+
 
 WINDOW_WIDTH = 800
 WINDOW_HEIGHT = 600
 WINDOW_TITLE = "Autonomous Driving 2D"
 FPS = 60
 BACKGROUND_COLOR = (20, 20, 20)
-TEXT_COLOR = (230, 230, 230)
-MESSAGE = "Interactive mode (Phase 1)"
+ROTATION_SPEED = 1.5
 
 
 def main() -> int:
     pygame.init()
+    renderer = PygameRenderer(width=WINDOW_WIDTH, height=WINDOW_HEIGHT)
+    pygame.display.set_caption(WINDOW_TITLE)
+    pose = CarPose(x=WINDOW_WIDTH / 2, y=WINDOW_HEIGHT / 2, angle=0.0)
+
     try:
-        screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
-        pygame.display.set_caption(WINDOW_TITLE)
-
-        clock = pygame.time.Clock()
-        font = pygame.font.Font(None, 36)
-        text_surface = font.render(MESSAGE, True, TEXT_COLOR)
-        text_rect = text_surface.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2))
-
         running = True
         while running:
+            dt = renderer.clock.tick(FPS) / 1000.0
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
                 elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                     running = False
 
-            screen.fill(BACKGROUND_COLOR)
-            screen.blit(text_surface, text_rect)
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_LEFT]:
+                pose.angle -= ROTATION_SPEED * dt
+            if keys[pygame.K_RIGHT]:
+                pose.angle += ROTATION_SPEED * dt
+
+            renderer.screen.fill(BACKGROUND_COLOR)
+            renderer.draw_car(renderer.screen, pose)
             pygame.display.flip()
-            clock.tick(FPS)
     finally:
         pygame.quit()
 
