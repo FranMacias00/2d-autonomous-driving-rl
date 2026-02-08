@@ -72,7 +72,7 @@ class PygameRenderer:
         geometry = self.geometry
 
         chassis = self._rect_points((0.0, 0.0), geometry.length, geometry.width)
-        cabin_center = (-geometry.length * 0.1, 0.0)
+        cabin_center = (geometry.length * 0.1, 0.0)
         cabin = self._rect_points(cabin_center, geometry.cabin_length, geometry.cabin_width)
 
         wheel_offsets = [
