@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import math
-from typing import List, Tuple
+from typing import List, Tuple, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src.sim.car import Car
 
 
 Point = Tuple[float, float]
@@ -66,3 +69,33 @@ class Track:
         for border in (left_border, right_border):
             segments.extend(list(zip(border[:-1], border[1:])))
         return segments
+
+    def is_point_on_road(self, point: Point) -> bool:
+        """Check whether a point is strictly inside the road polygon."""
+        left_border, right_border = self.get_borders()
+        polygon = left_border + list(reversed(right_border))
+
+        x, y = point
+        epsilon = 1e-9
+
+        for start, end in zip(polygon, polygon[1:] + polygon[:1]):
+            (x1, y1), (x2, y2) = start, end
+            cross = (x - x1) * (y2 - y1) - (y - y1) * (x2 - x1)
+            if abs(cross) <= epsilon:
+                dot = (x - x1) * (x - x2) + (y - y1) * (y - y2)
+                if dot <= epsilon:
+                    return False
+
+        crossings = 0
+        for start, end in zip(polygon, polygon[1:] + polygon[:1]):
+            x1, y1 = start
+            x2, y2 = end
+            if (y1 > y) != (y2 > y):
+                x_intersect = x1 + (y - y1) * (x2 - x1) / (y2 - y1)
+                if x_intersect > x:
+                    crossings += 1
+        return crossings % 2 == 1
+
+    def is_car_on_road(self, car: "Car") -> bool:
+        """Check whether the entire car bounding box is within the road."""
+        return all(self.is_point_on_road(vertex) for vertex in car.get_bbox_vertices())
