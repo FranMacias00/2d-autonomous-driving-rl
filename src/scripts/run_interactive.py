@@ -65,7 +65,14 @@ def main() -> int:
     start_x, start_y = track.centerline[0]
     next_x, next_y = track.centerline[1]
     start_angle = math.atan2(next_y - start_y, next_x - start_x)
+
+    # Move the spawn forward so the whole bounding box starts inside the road.
+    spawn_forward = 60.0  # px (tune: 50–80)
+    start_x += math.cos(start_angle) * spawn_forward
+    start_y += math.sin(start_angle) * spawn_forward
+
     car = Car(x=start_x, y=start_y, angle=start_angle)
+    spawn_pose = (start_x, start_y, start_angle)
     sensors = SensorSuite()
 
     try:
@@ -78,6 +85,8 @@ def main() -> int:
                     running = False
                 elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                     running = False
+                elif event.type == pygame.KEYDOWN and event.key == pygame.K_r:
+                    car.reset(*spawn_pose)
 
             keys = pygame.key.get_pressed()
             if keys[pygame.K_w]:
@@ -98,6 +107,7 @@ def main() -> int:
                     car.steering = min(0.0, car.steering + car.steering_return_rate * dt)
 
             car.step(dt)
+            on_road = track.is_car_on_road(car)
 
             renderer.screen.fill(BACKGROUND_COLOR)
             renderer.draw_track(renderer.screen, track)
@@ -112,6 +122,11 @@ def main() -> int:
             angle_text = f"Angle: {car.angle:.2f} rad"
             renderer.draw_text(renderer.screen, velocity_text, (20, 20))
             renderer.draw_text(renderer.screen, angle_text, (20, 45))
+            if not on_road:
+                off_track_text = "OFF TRACK"
+                text_surface = renderer.font.render(off_track_text, True, (220, 40, 40))
+                text_rect = text_surface.get_rect(center=(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2))
+                renderer.screen.blit(text_surface, text_rect)
             pygame.display.flip()
 
     finally:
