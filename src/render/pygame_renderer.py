@@ -39,6 +39,7 @@ class PygameRenderer:
         self.screen = pygame.display.set_mode((width, height))
         self.clock = pygame.time.Clock()
         self.geometry = CarGeometry()
+        self.font = pygame.font.SysFont("arial", 18)
 
     @staticmethod
     def _rotate_point(point: Point, angle: float) -> Point:
@@ -100,3 +101,13 @@ class PygameRenderer:
         pygame.draw.lines(surface, (255, 255, 255), False, right_border, 3)
         pygame.draw.line(surface, (220, 40, 40), left_border[-1], right_border[-1], 10)
         pygame.draw.lines(surface, (140, 140, 140), False, track.centerline, 1)
+
+    def draw_text(
+        self,
+        surface: pygame.Surface,
+        text: str,
+        position: Point,
+        color: Tuple[int, int, int] = (240, 240, 240),
+    ) -> None:
+        text_surface = self.font.render(text, True, color)
+        surface.blit(text_surface, position)
