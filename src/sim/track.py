@@ -70,6 +70,47 @@ class Track:
             segments.extend(list(zip(border[:-1], border[1:])))
         return segments
 
+    def get_finish_segment(self) -> Tuple[Point, Point]:
+        """Return the finish line segment using the last border points."""
+        left_border, right_border = self.get_borders()
+        return left_border[-1], right_border[-1]
+
+    def has_crossed_finish(self, p0: Point, p1: Point) -> bool:
+        """Check whether segment p0->p1 intersects the finish line."""
+        finish_start, finish_end = self.get_finish_segment()
+
+        def orientation(a: Point, b: Point, c: Point) -> int:
+            val = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])
+            eps = 1e-9
+            if abs(val) <= eps:
+                return 0
+            return 1 if val > 0 else 2
+
+        def on_segment(a: Point, b: Point, c: Point) -> bool:
+            return (
+                min(a[0], c[0]) - 1e-9 <= b[0] <= max(a[0], c[0]) + 1e-9
+                and min(a[1], c[1]) - 1e-9 <= b[1] <= max(a[1], c[1]) + 1e-9
+            )
+
+        o1 = orientation(p0, p1, finish_start)
+        o2 = orientation(p0, p1, finish_end)
+        o3 = orientation(finish_start, finish_end, p0)
+        o4 = orientation(finish_start, finish_end, p1)
+
+        if o1 != o2 and o3 != o4:
+            return True
+
+        if o1 == 0 and on_segment(p0, finish_start, p1):
+            return True
+        if o2 == 0 and on_segment(p0, finish_end, p1):
+            return True
+        if o3 == 0 and on_segment(finish_start, p0, finish_end):
+            return True
+        if o4 == 0 and on_segment(finish_start, p1, finish_end):
+            return True
+
+        return False
+
     def is_point_on_road(self, point: Point) -> bool:
         """Check whether a point is strictly inside the road polygon."""
         left_border, right_border = self.get_borders()

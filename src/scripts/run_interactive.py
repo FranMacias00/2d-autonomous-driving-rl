@@ -74,6 +74,7 @@ def main() -> int:
     car = Car(x=start_x, y=start_y, angle=start_angle)
     spawn_pose = (start_x, start_y, start_angle)
     sensors = SensorSuite()
+    finish_reached = False
 
     try:
         running = True
@@ -87,26 +88,41 @@ def main() -> int:
                     running = False
                 elif event.type == pygame.KEYDOWN and event.key == pygame.K_r:
                     car.reset(*spawn_pose)
+                    finish_reached = False
 
             keys = pygame.key.get_pressed()
-            if keys[pygame.K_w]:
-                car.throttle = 1.0
-            elif keys[pygame.K_s]:
-                car.throttle = -1.0
+            if not finish_reached:
+                if keys[pygame.K_w]:
+                    car.throttle = 1.0
+                elif keys[pygame.K_s]:
+                    car.throttle = -1.0
+                else:
+                    car.throttle = 0.0
+
+                if keys[pygame.K_a]:
+                    car.steering = -1.0
+                elif keys[pygame.K_d]:
+                    car.steering = 1.0
+                else:
+                    if car.steering > 0.0:
+                        car.steering = max(
+                            0.0, car.steering - car.steering_return_rate * dt
+                        )
+                    elif car.steering < 0.0:
+                        car.steering = min(
+                            0.0, car.steering + car.steering_return_rate * dt
+                        )
+
+                front_old = car.front_point()
+                car.step(dt)
+                front_new = car.front_point()
+                if track.has_crossed_finish(front_old, front_new):
+                    finish_reached = True
             else:
+                car.velocity = 0.0
                 car.throttle = 0.0
+                car.steering = 0.0
 
-            if keys[pygame.K_a]:
-                car.steering = -1.0
-            elif keys[pygame.K_d]:
-                car.steering = 1.0
-            else:
-                if car.steering > 0.0:
-                    car.steering = max(0.0, car.steering - car.steering_return_rate * dt)
-                elif car.steering < 0.0:
-                    car.steering = min(0.0, car.steering + car.steering_return_rate * dt)
-
-            car.step(dt)
             on_road = track.is_car_on_road(car)
 
             renderer.screen.fill(BACKGROUND_COLOR)
@@ -126,6 +142,13 @@ def main() -> int:
                 off_track_text = "OFF TRACK"
                 text_surface = renderer.font.render(off_track_text, True, (220, 40, 40))
                 text_rect = text_surface.get_rect(center=(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2))
+                renderer.screen.blit(text_surface, text_rect)
+            if finish_reached:
+                finish_text = "FINISH"
+                text_surface = renderer.font.render(finish_text, True, (40, 200, 80))
+                text_rect = text_surface.get_rect(
+                    center=(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2)
+                )
                 renderer.screen.blit(text_surface, text_rect)
             pygame.display.flip()
 
