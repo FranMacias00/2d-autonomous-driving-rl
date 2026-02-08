@@ -57,3 +57,12 @@ class Track:
             )
 
         return left_border, right_border
+
+    def get_border_segments(self) -> List[Tuple[Point, Point]]:
+        """Return combined segments for left and right borders."""
+
+        left_border, right_border = self.get_borders()
+        segments: List[Tuple[Point, Point]] = []
+        for border in (left_border, right_border):
+            segments.extend(list(zip(border[:-1], border[1:])))
+        return segments

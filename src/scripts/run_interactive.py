@@ -11,6 +11,7 @@ import pygame
 
 from src.render.pygame_renderer import PygameRenderer
 from src.sim.car import Car
+from src.sim.sensors import SensorSuite
 from src.sim.state import CarPose
 from src.sim.track import Track
 
@@ -65,6 +66,7 @@ def main() -> int:
     next_x, next_y = track.centerline[1]
     start_angle = math.atan2(next_y - start_y, next_x - start_x)
     car = Car(x=start_x, y=start_y, angle=start_angle)
+    sensors = SensorSuite()
 
     try:
         running = True
@@ -102,6 +104,8 @@ def main() -> int:
 
             pose = CarPose(x=car.x, y=car.y, angle=car.angle)
             renderer.draw_car(renderer.screen, pose)
+            rays_data = sensors.cast(car, track)
+            renderer.draw_sensors(renderer.screen, rays_data)
 
             speed_kmh = car.velocity * 3.6
             velocity_text = f"Velocity: {car.velocity:.1f} px/s ({speed_kmh:.1f} km/h)"
