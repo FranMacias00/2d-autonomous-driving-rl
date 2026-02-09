@@ -6,7 +6,7 @@ from src.env.gym_env import DrivingEnv
 
 
 def main() -> int:
-    env = DrivingEnv()
+    env = DrivingEnv() # Usamos render_mode="human" para mostrar la ventana de Pygame durante el test
     try:
         for episode in range(1, 4):
             obs, info = env.reset()
