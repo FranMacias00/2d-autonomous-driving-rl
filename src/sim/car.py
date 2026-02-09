@@ -64,6 +64,14 @@ class Car:
             corners.append((self.x + rotated_x, self.y + rotated_y))
         return corners
 
+    def front_point(self) -> Tuple[float, float]:
+        """Return the point at the front center of the car."""
+        half_length = self.length / 2.0
+        return (
+            self.x + math.cos(self.angle) * half_length,
+            self.y + math.sin(self.angle) * half_length,
+        )
+
     def reset(self, x: float, y: float, angle: float) -> None:
         """Reset car pose and clear motion inputs."""
         self.x = x
