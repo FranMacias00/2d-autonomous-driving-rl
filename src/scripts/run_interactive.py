@@ -138,7 +138,7 @@ def main() -> int:
             angle_text = f"Angle: {car.angle:.2f} rad"
             renderer.draw_text(renderer.screen, velocity_text, (20, 20))
             renderer.draw_text(renderer.screen, angle_text, (20, 45))
-            if not on_road:
+            if not on_road and not finish_reached:
                 off_track_text = "OFF TRACK"
                 text_surface = renderer.font.render(off_track_text, True, (220, 40, 40))
                 text_rect = text_surface.get_rect(center=(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2))
