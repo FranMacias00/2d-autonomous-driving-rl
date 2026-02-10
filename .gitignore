@@ -1,6 +1,16 @@
 # Entorno virtual
 .venv/
 
-# Python (en cualquier carpeta)
+# Python
 **/__pycache__/
 *.pyc
+
+# Datos y logs de entrenamiento
+logs/
+
+# Modelos entrenados
+models/*.zip
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
