@@ -1,8 +1,18 @@
 import os
+import time
+import datetime
 from stable_baselines3 import PPO
 from src.env.gym_env import DrivingEnv
 
 def main() -> None:
+    # --- CONFIGURACIÓN DE VERSIÓN Y NOMBRES ---
+    # Cambiar el número de versión para cada nueva ejecución para mantener un historial organizado
+    VERSION = "v2" 
+    run_id = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    model_name = f"ppo_driving_car_{VERSION}_{run_id}"
+    log_name = f"PPO_{VERSION}_{run_id}"
+    # ------------------------------------------
+
     # 1. Preparación de carpetas
     os.makedirs("models", exist_ok=True)
     os.makedirs("logs", exist_ok=True)
@@ -11,7 +21,6 @@ def main() -> None:
     env = DrivingEnv()
 
     # 3. Configuración del modelo PPO
-    # He añadido 'tb_log_name' para organizar mejor tus gráficas
     model = PPO(
         "MlpPolicy",
         env,
@@ -23,29 +32,32 @@ def main() -> None:
     )
 
     # 4. Fase de Aprendizaje
-    print("Iniciando entrenamiento...")
-    model.learn(total_timesteps=300000, tb_log_name="PPO_v1_run")
+    print(f"Iniciando entrenamiento: {log_name}...")
+    model.learn(total_timesteps=300000, tb_log_name=log_name)
     
-    # Guardar el cerebro de la IA
-    model.save("models/ppo_driving_car_v1")
+    # Guardar el modelo usando el nombre dinámico
+    model_path = f"models/{model_name}"
+    model.save(model_path)
     env.close()
 
     # 5. Fase de Evaluación (Visual)
-    print("\nEntrenamiento completado. Iniciando demostración...")
+    print(f"\nEntrenamiento completado. Cargando: {model_path}")
     eval_env = DrivingEnv(render_mode="human")
-    # Cargamos el modelo recién guardado en el entorno visual
-    model = PPO.load("models/ppo_driving_car_v1", env=eval_env)
+    
+    # Cargamos el modelo recién guardado de forma dinámica
+    model = PPO.load(model_path, env=eval_env)
 
     for episode in range(5):
         obs, _ = eval_env.reset()
         done = False
         total_reward = 0.0
         while not done:
-            # deterministic=True para ver el comportamiento "final" aprendido
+            # Control de velocidad para humanos (60 FPS)
+            time.sleep(1/60)
+            
             action, _ = model.predict(obs, deterministic=True)
             obs, reward, terminated, truncated, _ = eval_env.step(action)
             
-            # El renderizado ahora será fluido gracias a los cambios en gym_env
             done = terminated or truncated
             total_reward += reward
             
