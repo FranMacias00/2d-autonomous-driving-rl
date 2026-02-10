@@ -3,13 +3,12 @@
 from __future__ import annotations
 
 import math
-import os
 from typing import Optional, Tuple
 
 import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
-import pygame  # Movido al inicio para mayor eficiencia
+import pygame
 
 from src.render.pygame_renderer import PygameRenderer
 from src.sim.car import Car
