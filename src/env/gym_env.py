@@ -144,12 +144,23 @@ class DrivingEnv(gym.Env):
         self.steps += 1
         terminated = off_track or finish
         truncated = self.steps >= 1500
-        
+
         # Info de depuración
         event = None
         if finish: event = "finish"
         elif off_track: event = "off_track"
         elif truncated: event = "timeout"
+
+        # --- BLOQUE DE PRINTS DE DIAGNÓSTICO ---
+        if terminated or truncated:
+            print(f"\n--- DEBUG EPISODIO FINALIZADO ---")
+            print(f"¿Detección off_track?: {off_track}")
+            print(f"¿Detección finish?: {finish}")
+            print(f"Evento asignado en info: {event}")
+            print(f"Recompensa de este último paso: {reward:.2f}")
+            print(f"Velocidad actual: {self.car.velocity:.2f}")
+            print(f"Posición morro (front_new): {front_new}")
+            print(f"----------------------------------")
 
         info = {"event": event}
         observation = self._get_observation()
