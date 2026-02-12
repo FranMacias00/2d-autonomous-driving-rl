@@ -75,67 +75,66 @@ class Track:
         left_border, right_border = self.get_borders()
         return left_border[-1], right_border[-1]
 
-    def has_crossed_finish(self, p0: Point, p1: Point) -> bool:
-        """Check whether segment p0->p1 intersects the finish line."""
-        finish_start, finish_end = self.get_finish_segment()
+    def has_crossed_finish(self, p1: Point, p2: Point) -> bool:
+        """
+        Detecta la intersección entre el movimiento del coche (p1 -> p2)
+        y el segmento físico de la meta.
+        """
+        left_border, right_border = self.get_borders()
+        # Definimos el segmento de meta: de borde a borde al final de la pista
+        m1 = left_border[-1]
+        m2 = right_border[-1]
 
-        def orientation(a: Point, b: Point, c: Point) -> int:
-            val = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])
-            eps = 1e-9
-            if abs(val) <= eps:
-                return 0
-            return 1 if val > 0 else 2
+        # Función auxiliar: determina la orientación de tres puntos
+        def _ccw(A, B, C):
+            # Producto cruzado para saber si el giro es sentido horario o antihorario
+            return (C[1] - A[1]) * (B[0] - A[0]) > (B[1] - A[1]) * (C[0] - A[0])
 
-        def on_segment(a: Point, b: Point, c: Point) -> bool:
-            return (
-                min(a[0], c[0]) - 1e-9 <= b[0] <= max(a[0], c[0]) + 1e-9
-                and min(a[1], c[1]) - 1e-9 <= b[1] <= max(a[1], c[1]) + 1e-9
-            )
-
-        o1 = orientation(p0, p1, finish_start)
-        o2 = orientation(p0, p1, finish_end)
-        o3 = orientation(finish_start, finish_end, p0)
-        o4 = orientation(finish_start, finish_end, p1)
-
-        if o1 != o2 and o3 != o4:
-            return True
-
-        if o1 == 0 and on_segment(p0, finish_start, p1):
-            return True
-        if o2 == 0 and on_segment(p0, finish_end, p1):
-            return True
-        if o3 == 0 and on_segment(finish_start, p0, finish_end):
-            return True
-        if o4 == 0 and on_segment(finish_start, p1, finish_end):
-            return True
-
-        return False
+        # Algoritmo de intersección de segmentos:
+        # Si las orientaciones de los puntos finales son distintas, hay cruce.
+        intersecta = (_ccw(p1, m1, m2) != _ccw(p2, m1, m2) and 
+                      _ccw(p1, p2, m1) != _ccw(p1, p2, m2))
+        
+        return intersecta
 
     def is_point_on_road(self, point: Point) -> bool:
-        """Check whether a point is strictly inside the road polygon."""
-        left_border, right_border = self.get_borders()
-        polygon = left_border + list(reversed(right_border))
-
+        """
+        Determina si un punto está sobre el asfalto.
+        Eándar industrial: Distancia mínima al eje central (centerline).
+        """
         x, y = point
-        epsilon = 1e-9
+        min_dist_sq = float('inf')
+        half_width_sq = (self.road_width / 2.0) ** 2
+        
+        # Iteramos por cada segmento de la línea central
+        for i in range(len(self.centerline) - 1):
+            p1 = self.centerline[i]
+            p2 = self.centerline[i+1]
+            
+            dx = p2[0] - p1[0]
+            dy = p2[1] - p1[1]
+            
+            if dx == 0 and dy == 0:
+                continue
+                
+            # Calculamos la proyección del punto sobre el segmento (t)
+            # Esto nos da el punto más cercano dentro del segmento p1->p2
+            t = ((x - p1[0]) * dx + (y - p1[1]) * dy) / (dx*dx + dy*dy)
+            t = max(0, min(1, t)) # Limitar al segmento
+            
+            closest_x = p1[0] + t * dx
+            closest_y = p1[1] + t * dy
+            
+            dist_sq = (x - closest_x)**2 + (y - closest_y)**2
+            
+            if dist_sq < min_dist_sq:
+                min_dist_sq = dist_sq
 
-        for start, end in zip(polygon, polygon[1:] + polygon[:1]):
-            (x1, y1), (x2, y2) = start, end
-            cross = (x - x1) * (y2 - y1) - (y - y1) * (x2 - x1)
-            if abs(cross) <= epsilon:
-                dot = (x - x1) * (x - x2) + (y - y1) * (y - y2)
-                if dot <= epsilon:
-                    return False
-
-        crossings = 0
-        for start, end in zip(polygon, polygon[1:] + polygon[:1]):
-            x1, y1 = start
-            x2, y2 = end
-            if (y1 > y) != (y2 > y):
-                x_intersect = x1 + (y - y1) * (x2 - x1) / (y2 - y1)
-                if x_intersect > x:
-                    crossings += 1
-        return crossings % 2 == 1
+            # Optimización: si ya estamos dentro del ancho, no hace falta mirar más segmentos
+            if min_dist_sq <= half_width_sq:
+                return True
+        
+        return min_dist_sq <= half_width_sq
 
     def is_car_on_road(self, car: "Car") -> bool:
         """Check whether the entire car bounding box is within the road."""

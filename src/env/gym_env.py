@@ -120,36 +120,32 @@ class DrivingEnv(gym.Env):
         off_track = not self.track.is_car_on_road(self.car)
         finish = self.track.has_crossed_finish(front_old, front_new)
 
-        # --- SISTEMA DE RECOMPENSA ACTUALIZADO ---
         reward = 0.0
-        
-        # 1. Penalizar estar parado o retroceder (Anti-cobarde)
-        if self.car.velocity < 1.0:
-            reward -= 0.1
-        else:
-            # 2. Premiar velocidad hacia adelante
-            reward += 0.2 * (self.car.velocity / self.car.max_speed)
-            # 3. Pequeño bono de supervivencia solo si avanza
-            if not off_track:
-                reward += 0.05
-
-        # 4. Penalización drástica por choque
-        if off_track:
-            reward -= 30.0
-            
-        # 5. Gran premio por meta
-        if finish:
-            reward += 150.0
-
-        self.steps += 1
-        terminated = off_track or finish
-        truncated = self.steps >= 1500
-
-        # Info de depuración
+        terminated = False
         event = None
-        if finish: event = "finish"
-        elif off_track: event = "off_track"
-        elif truncated: event = "timeout"
+
+        # --- NUEVA LÓGICA DE PRIORIDAD (Aquí está la clave) ---
+        if finish:
+            reward = 150.0
+            terminated = True
+            event = "finish"
+        
+        elif off_track:
+            reward = -30.0
+            terminated = True
+            event = "off_track"
+            
+        else:
+            # Conducción normal
+            if self.car.velocity < 1.0:
+                reward = -0.1
+            else:
+                reward = (0.2 * (self.car.velocity / self.car.max_speed)) + 0.05
+        
+        self.steps += 1
+        truncated = self.steps >= 1500
+        if truncated and not terminated:
+            event = "timeout"
 
         # --- BLOQUE DE PRINTS DE DIAGNÓSTICO ---
         if terminated or truncated:
