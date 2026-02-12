@@ -78,8 +78,9 @@ class DrivingEnv(gym.Env):
         # Normalizamos distancias al rango [0, 1]
         distances = [np.clip(ray["distance"] / self.sensors.max_range, 0.0, 1.0) for ray in rays]
         
-        # Velocidad normalizada absoluta (para que el coche entienda rapidez sin importar sentido)
-        velocity_norm = np.clip(abs(self.car.velocity) / self.car.max_speed, 0.0, 1.0)
+        # Eliminamos el ABS: ahora el coche distingue si la velocidad es negativa (marcha atrás)
+        # Escalamos de [-max_speed, max_speed] a [0, 1] donde 0.5 es parado
+        velocity_norm = np.clip((self.car.velocity / self.car.max_speed + 1.0) / 2.0, 0.0, 1.0)
         
         return np.array(distances + [velocity_norm], dtype=np.float32)
 
@@ -107,11 +108,8 @@ class DrivingEnv(gym.Env):
         """Ejecuta un paso de simulación."""
         # Limpiar y asegurar formato de acción
         action = np.clip(action, -1.0, 1.0)
-        throttle = float(action[0])
-        steering = float(action[1])
-
-        self.car.throttle = throttle
-        self.car.steering = steering
+        self.car.throttle = float(action[0])
+        self.car.steering = float(action[1])
 
         # Guardar posición anterior para detectar cruce de meta
         front_old = self.car.front_point()
@@ -122,21 +120,31 @@ class DrivingEnv(gym.Env):
         off_track = not self.track.is_car_on_road(self.car)
         finish = self.track.has_crossed_finish(front_old, front_new)
 
-        # Cálculo de Recompensa
-        reward = 0.01  # Bono por supervivencia
-        # Recompensa por velocidad (solo si va hacia adelante)
-        if self.car.velocity > 0:
-            reward += 0.1 * (self.car.velocity / self.car.max_speed)
+        # --- SISTEMA DE RECOMPENSA ACTUALIZADO ---
+        reward = 0.0
         
+        # 1. Penalizar estar parado o retroceder (Anti-cobarde)
+        if self.car.velocity < 1.0:
+            reward -= 0.1
+        else:
+            # 2. Premiar velocidad hacia adelante
+            reward += 0.2 * (self.car.velocity / self.car.max_speed)
+            # 3. Pequeño bono de supervivencia solo si avanza
+            if not off_track:
+                reward += 0.05
+
+        # 4. Penalización drástica por choque
         if off_track:
-            reward -= 20.0
+            reward -= 30.0
+            
+        # 5. Gran premio por meta
         if finish:
-            reward += 100.0
+            reward += 150.0
 
         self.steps += 1
         terminated = off_track or finish
         truncated = self.steps >= 1500
-
+        
         # Info de depuración
         event = None
         if finish: event = "finish"
