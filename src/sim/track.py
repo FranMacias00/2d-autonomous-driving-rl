@@ -98,43 +98,32 @@ class Track:
         return intersecta
 
     def is_point_on_road(self, point: Point) -> bool:
-        """
-        Determina si un punto está sobre el asfalto.
-        Eándar industrial: Distancia mínima al eje central (centerline).
-        """
-        x, y = point
-        min_dist_sq = float('inf')
-        half_width_sq = (self.road_width / 2.0) ** 2
-        
-        # Iteramos por cada segmento de la línea central
-        for i in range(len(self.centerline) - 1):
-            p1 = self.centerline[i]
-            p2 = self.centerline[i+1]
-            
-            dx = p2[0] - p1[0]
-            dy = p2[1] - p1[1]
-            
-            if dx == 0 and dy == 0:
-                continue
-                
-            # Calculamos la proyección del punto sobre el segmento (t)
-            # Esto nos da el punto más cercano dentro del segmento p1->p2
-            t = ((x - p1[0]) * dx + (y - p1[1]) * dy) / (dx*dx + dy*dy)
-            t = max(0, min(1, t)) # Limitar al segmento
-            
-            closest_x = p1[0] + t * dx
-            closest_y = p1[1] + t * dy
-            
-            dist_sq = (x - closest_x)**2 + (y - closest_y)**2
-            
-            if dist_sq < min_dist_sq:
-                min_dist_sq = dist_sq
+        """Check whether a point is strictly inside the road polygon."""
+        left_border, right_border = self.get_borders()
+        polygon = left_border + list(reversed(right_border))
 
-            # Optimización: si ya estamos dentro del ancho, no hace falta mirar más segmentos
-            if min_dist_sq <= half_width_sq:
-                return True
-        
-        return min_dist_sq <= half_width_sq
+        x, y = point
+        epsilon = 1e-9
+
+        # Comprobación de colisión con los bordes (límite estricto)
+        for start, end in zip(polygon, polygon[1:] + polygon[:1]):
+            (x1, y1), (x2, y2) = start, end
+            cross = (x - x1) * (y2 - y1) - (y - y1) * (x2 - x1)
+            if abs(cross) <= epsilon:
+                dot = (x - x1) * (x - x2) + (y - y1) * (y - y2)
+                if dot <= epsilon:
+                    return False
+
+        # Algoritmo de Ray Casting para interior del polígono
+        crossings = 0
+        for start, end in zip(polygon, polygon[1:] + polygon[:1]):
+            x1, y1 = start
+            x2, y2 = end
+            if (y1 > y) != (y2 > y):
+                x_intersect = x1 + (y - y1) * (x2 - x1) / (y2 - y1)
+                if x_intersect > x:
+                    crossings += 1
+        return crossings % 2 == 1
 
     def is_car_on_road(self, car: "Car") -> bool:
         """Check whether the entire car bounding box is within the road."""

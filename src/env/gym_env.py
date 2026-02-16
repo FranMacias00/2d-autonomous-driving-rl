@@ -124,7 +124,7 @@ class DrivingEnv(gym.Env):
         terminated = False
         event = None
 
-        # --- NUEVA LÓGICA DE PRIORIDAD (Aquí está la clave) ---
+        # Lógica de prioridad
         if finish:
             reward = 150.0
             terminated = True
