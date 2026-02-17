@@ -7,7 +7,7 @@ from src.env.gym_env import DrivingEnv
 def main() -> None:
     # --- CONFIGURACIÓN DE VERSIÓN Y NOMBRES ---
     # Cambiar el número de versión para cada nueva ejecución para mantener un historial organizado
-    VERSION = "v3" 
+    VERSION = "v6" 
     run_id = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     model_name = f"ppo_driving_car_{VERSION}_{run_id}"
     log_name = f"PPO_{VERSION}_{run_id}"

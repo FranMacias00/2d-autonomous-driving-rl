@@ -98,31 +98,28 @@ class Track:
         return intersecta
 
     def is_point_on_road(self, point: Point) -> bool:
-        """Check whether a point is strictly inside the road polygon."""
+        """Comprueba si un punto está dentro o sobre el borde del polígono de la carretera."""
         left_border, right_border = self.get_borders()
+        # Cerramos el polígono uniendo el final de un borde con el inicio del otro
         polygon = left_border + list(reversed(right_border))
 
         x, y = point
-        epsilon = 1e-9
-
-        # Comprobación de colisión con los bordes (límite estricto)
-        for start, end in zip(polygon, polygon[1:] + polygon[:1]):
-            (x1, y1), (x2, y2) = start, end
-            cross = (x - x1) * (y2 - y1) - (y - y1) * (x2 - x1)
-            if abs(cross) <= epsilon:
-                dot = (x - x1) * (x - x2) + (y - y1) * (y - y2)
-                if dot <= epsilon:
-                    return False
-
-        # Algoritmo de Ray Casting para interior del polígono
         crossings = 0
-        for start, end in zip(polygon, polygon[1:] + polygon[:1]):
-            x1, y1 = start
-            x2, y2 = end
-            if (y1 > y) != (y2 > y):
-                x_intersect = x1 + (y - y1) * (x2 - x1) / (y2 - y1)
-                if x_intersect > x:
+        n = len(polygon)
+
+        for i in range(n):
+            p1 = polygon[i]
+            p2 = polygon[(i + 1) % n]
+            
+            # Algoritmo de Jordan (Ray Casting)
+            # Comprueba si el punto está en el rango vertical del segmento
+            if ((p1[1] > y) != (p2[1] > y)):
+                # Calcula la intersección horizontal (x_intersect)
+                x_intersect = (p2[0] - p1[0]) * (y - p1[1]) / (p2[1] - p1[1]) + p1[0]
+                if x < x_intersect:
                     crossings += 1
+
+        # Si el número de cruces es impar, el punto está dentro
         return crossings % 2 == 1
 
     def is_car_on_road(self, car: "Car") -> bool:

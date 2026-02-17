@@ -116,27 +116,38 @@ class DrivingEnv(gym.Env):
         self.car.step(1.0 / 60.0)
         front_new = self.car.front_point()
 
-        # Comprobar condiciones de fin
+        # Detección de estado
         off_track = not self.track.is_car_on_road(self.car)
         finish = self.track.has_crossed_finish(front_old, front_new)
+
+        # Cálculo de distancia a meta para margen de 50px
+        f_start, f_end = self.track.get_finish_segment()
+        m_center = ((f_start[0] + f_end[0]) / 2, (f_start[1] + f_end[1]) / 2)
+        dist_to_finish = math.hypot(self.car.x - m_center[0], self.car.y - m_center[1])
 
         reward = 0.0
         terminated = False
         event = None
 
-        # Lógica de prioridad
+        # --- LÓGICA DE RECOMPENSAS Y ZONA DE GRACIA ---
         if finish:
             reward = 150.0
             terminated = True
             event = "finish"
         
-        elif off_track:
+        # Muerte: Fuera de pista y LEJOS de la meta (> 50px)
+        elif off_track and dist_to_finish > self.car.length:
             reward = -30.0
             terminated = True
             event = "off_track"
             
+        # Zona de Gracia: Fuera de pista pero CERCA de la meta (<= 50px)
+        elif off_track and dist_to_finish <= self.car.length:
+            # Recompensa plana para incentivar el cierre sin premiar velocidad en césped
+            reward = 0.05 
+        
+        # Conducción Normal (en pista)
         else:
-            # Conducción normal
             if self.car.velocity < 1.0:
                 reward = -0.1
             else:
