@@ -19,9 +19,7 @@ mostrar_sensores = st.sidebar.checkbox("Mostrar Sensores", value=True)
 # --- CARGA DE ACTIVOS ---
 @st.cache_resource
 def load_assets():
-    # Instanciamos con rgb_array para que funcione en la web
     env = DrivingEnv(render_mode="rgb_array")
-    # Cargamos tu modelo final (asegúrate de que el nombre coincida)
     try:
         model = PPO.load("modelo_entrenado.zip")
         return env, model
@@ -35,39 +33,55 @@ env, model = load_assets()
 if model:
     if st.button('🏁 Iniciar Simulación'):
         obs, info = env.reset()
-        
-        # Este contenedor es donde se irá actualizando la imagen del coche
         placeholder = st.empty()
-        
         progress_bar = st.progress(0)
         
+        # Variables para métricas
+        start_time = time.time()
+        recompensas = []
+        max_vel_alcanzada = 0.0
+
         for step in range(1500):
-            # La IA predice la acción basada en la observación
             action, _ = model.predict(obs, deterministic=True)
-            
-            # Aplicamos la acción al entorno
             obs, reward, terminated, truncated, info = env.step(action)
             
-            # CAPTURAMOS EL RENDER (Esto devuelve el array que configuramos antes)
-            frame = env.render(show_sensors=mostrar_sensores)
+            # Guardar datos para el resumen final
+            recompensas.append(reward)
+            if env.car.velocity > max_vel_alcanzada:
+                max_vel_alcanzada = env.car.velocity
             
+            # Renderizado
+            frame = env.render(show_sensors=mostrar_sensores)
             if frame is not None:
-                # Dibujamos el frame en la web
                 placeholder.image(frame, channels="RGB", width="stretch")
             
-            # Actualizamos barra de progreso
-            progress_bar.progress(min(step / 1500, 1.0))
+            # Sincronización de barra con los pasos reales del entorno
+            progress_bar.progress(min(env.steps / 1500, 1.0))
             
             if terminated or truncated:
                 evento = info.get("event", "desconocido")
+                st.divider()
+                
+                # --- NOTIFICACIONES ---
                 if evento == "finish":
-                    st.balloons()
-                    st.success("¡META ALCANZADA! 🎉")
-                else:
-                    st.warning(f"Simulación terminada: {evento}")
+                    st.toast('¡Objetivo completado!', icon='🏁')
+                    st.success("✨ **RESULTADO: META ALCANZADA**")
+                elif evento == "off_track":
+                    st.toast('Colisión detectada', icon='💥')
+                    st.error("💥 **RESULTADO: COLISIÓN**")
+                elif evento == "timeout":
+                    st.toast('Tiempo agotado', icon='⏳')
+                    st.warning("⏳ **RESULTADO: TIEMPO AGOTADO**")
+
+                # --- CUADRO DE MÉTRICAS SINCRONIZADO ---
+                col1, col2, col3, col4 = st.columns(4)
+                col1.metric("Pasos Reales", f"{env.steps}")
+                col2.metric("Recompensa Media", f"{np.mean(recompensas):.2f}")
+                col3.metric("Vel. Máxima", f"{max_vel_alcanzada:.1f} px/s")
+                col4.metric("Tiempo Sim.", f"{time.time() - start_time:.1f}s")
+                
                 break
             
-            # Pequeña pausa para que el ojo humano pueda seguir el movimiento
             time.sleep(velocidad_sim)
 
 # --- SECCIÓN TÉCNICA (PIE DE PÁGINA) ---
@@ -78,5 +92,5 @@ st.info("""
 * **Motor:** Pygame (Physics Engine)
 * **Entorno:** Gymnasium (Custom Environment)
 * **Algoritmo:** PPO (Proximal Policy Optimization)
-* **Detección:** Ray Casting & Teorema de la Curva de Jordan
+* **Detección:** Ray Casting (7 sensores a 120°)
 """)
