@@ -9,7 +9,7 @@ from stable_baselines3 import PPO
 from src.env.gym_env import DrivingEnv
 
 
-MODEL_PATH = "models/ppo_driving_car_v6_20260217_212439.zip"
+MODEL_PATH = "modelo_entrenado.zip"
 N_EPISODES = 3
 
 

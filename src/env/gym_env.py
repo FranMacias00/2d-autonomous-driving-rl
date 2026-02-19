@@ -19,8 +19,9 @@ from src.sim.track import Track
 
 class DrivingEnv(gym.Env):
     """Gymnasium-compatible environment for the procedural driving task."""
-
-    metadata = {"render_modes": ["human"], "render_fps": 60}
+    
+    # Actualizamos para soportar rgb_array (necesario para Streamlit/Web)
+    metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 60}
 
     def __init__(self, render_mode: Optional[str] = None) -> None:
         super().__init__()
@@ -177,15 +178,15 @@ class DrivingEnv(gym.Env):
 
         return observation, float(reward), terminated, truncated, info
 
-    def render(self) -> None:
-        """Dibuja el entorno si el modo es 'human'."""
-        if self.render_mode != "human":
-            return
+    def render(self, show_sensors: bool = True) -> Optional[np.ndarray]:
+        """Dibuja el entorno y devuelve un array de imagen si es modo rgb_array."""
+        if self.render_mode is None:
+            return None
             
         if self.renderer is None:
             self.renderer = PygameRenderer(width=800, height=600)
 
-        # Proceso de dibujo
+        # Proceso de dibujo sobre la superficie (surface) de Pygame
         self.renderer.screen.fill((20, 20, 20))
         if self.track is not None:
             self.renderer.draw_track(self.renderer.screen, self.track)
@@ -193,10 +194,12 @@ class DrivingEnv(gym.Env):
         pose = CarPose(x=self.car.x, y=self.car.y, angle=self.car.angle)
         self.renderer.draw_car(self.renderer.screen, pose)
         
-        rays = self.sensors.cast(self.car, self.track)
-        self.renderer.draw_sensors(
-            self.renderer.screen, rays, danger_distance=self.sensors.danger_distance
-        )
+        # Dibujo condicional de sensores
+        if show_sensors:
+            rays = self.sensors.cast(self.car, self.track)
+            self.renderer.draw_sensors(
+                self.renderer.screen, rays, danger_distance=self.sensors.danger_distance
+            )
         
         self.renderer.draw_text(
             self.renderer.screen,
@@ -204,9 +207,18 @@ class DrivingEnv(gym.Env):
             (20, 20),
         )
 
-        pygame.display.flip()
-        # Limitador de FPS: solo frena la CPU cuando estamos mirando
-        self.renderer.clock.tick(self.metadata["render_fps"])
+        # Lógica de salida
+        if self.render_mode == "human":
+            pygame.display.flip()
+            self.renderer.clock.tick(self.metadata["render_fps"])
+            return None
+        
+        elif self.render_mode == "rgb_array":
+            # Captura la pantalla y la transpone de (W, H, C) a (H, W, C) para Streamlit/NumPy
+            return np.transpose(
+                np.array(pygame.surfarray.pixels3d(self.renderer.screen)), 
+                axes=(1, 0, 2)
+            )
 
     def close(self) -> None:
         """Cierra el renderer y libera recursos."""
