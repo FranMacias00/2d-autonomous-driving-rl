@@ -17,8 +17,8 @@ Segment = Tuple[Point, Point]
 class SensorSuite:
     """Cast multiple rays around the car to detect nearby borders."""
 
-    num_rays: int = 7
-    fov_degrees: float = 120.0
+    num_rays: int = 9 # Subimos de 7 a 9 para no perder resolución
+    fov_degrees: float = 180.0 # Ampliamos de 120 a 180 para ver los laterales
     max_range: float = 220.0
     danger_distance: float = 50.0
     front_offset: float = 40.0

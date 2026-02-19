@@ -32,9 +32,9 @@ class DrivingEnv(gym.Env):
             low=-1.0, high=1.0, shape=(2,), dtype=np.float32
         )
         
-        # Espacio de observaciones: 7 sensores + 1 velocidad
+        # Espacio de observaciones: 9 sensores + 1 velocidad
         self.observation_space = spaces.Box(
-            low=0.0, high=1.0, shape=(8,), dtype=np.float32
+            low=0.0, high=1.0, shape=(10,), dtype=np.float32
         )
 
         self.car = Car(0.0, 0.0, 0.0)
