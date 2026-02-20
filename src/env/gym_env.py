@@ -184,7 +184,8 @@ class DrivingEnv(gym.Env):
             return None
             
         if self.renderer is None:
-            self.renderer = PygameRenderer(width=800, height=600)
+            # Pasamos el modo actual para que sepa si crear Surface o Ventana
+            self.renderer = PygameRenderer(width=800, height=600, render_mode=self.render_mode)
 
         # Proceso de dibujo sobre la superficie (surface) de Pygame
         self.renderer.screen.fill((20, 20, 20))
@@ -214,11 +215,9 @@ class DrivingEnv(gym.Env):
             return None
         
         elif self.render_mode == "rgb_array":
-            # Captura la pantalla y la transpone de (W, H, C) a (H, W, C) para Streamlit/NumPy
-            return np.transpose(
-                np.array(pygame.surfarray.pixels3d(self.renderer.screen)), 
-                axes=(1, 0, 2)
-            )
+            # Usamos array3d y .copy() para evitar colapsos de memoria
+            img_array = pygame.surfarray.array3d(self.renderer.screen)
+            return np.transpose(img_array, axes=(1, 0, 2)).copy()
 
     def close(self) -> None:
         """Cierra el renderer y libera recursos."""

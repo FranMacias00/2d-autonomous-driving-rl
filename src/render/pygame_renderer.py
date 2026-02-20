@@ -32,11 +32,15 @@ class CarGeometry:
 class PygameRenderer:
     """Renderer for drawing a simple top-down car using Pygame primitives."""
 
-    def __init__(self, width: int = 800, height: int = 600) -> None:
+    def __init__(self, width: int = 800, height: int = 600, render_mode: str = "rgb_array") -> None:
         pygame.init()
         self.width = width
         self.height = height
-        self.screen = pygame.display.set_mode((width, height))
+        # Si es para la web, usamos una superficie de memoria (RAM)
+        if render_mode == "rgb_array":
+            self.screen = pygame.Surface((width, height))
+        else:
+            self.screen = pygame.display.set_mode((width, height))
         self.clock = pygame.time.Clock()
         self.geometry = CarGeometry()
         self.font = pygame.font.SysFont("arial", 18)

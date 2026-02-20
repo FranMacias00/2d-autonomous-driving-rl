@@ -50,15 +50,22 @@ if model:
             if env.car.velocity > max_vel_alcanzada:
                 max_vel_alcanzada = env.car.velocity
             
-            # Renderizado
-            frame = env.render(show_sensors=mostrar_sensores)
-            if frame is not None:
-                placeholder.image(frame, channels="RGB", width="stretch")
+            # --- MEJORA: Renderizado optimizado para la nube ---
+            # Renderizamos 1 de cada 3 pasos para evitar saturar el servidor (KeyError)
+            if step % 3 == 0:
+                frame = env.render(show_sensors=mostrar_sensores)
+                if frame is not None:
+                    placeholder.image(frame, channels="RGB", width="stretch")
             
             # Sincronización de barra con los pasos reales del entorno
             progress_bar.progress(min(env.steps / 1500, 1.0))
             
             if terminated or truncated:
+                # Al terminar, forzamos el dibujado del último frame (meta o choque)
+                frame_final = env.render(show_sensors=mostrar_sensores)
+                if frame_final is not None:
+                    placeholder.image(frame_final, channels="RGB", width="stretch")
+
                 evento = info.get("event", "desconocido")
                 st.divider()
                 
@@ -82,7 +89,9 @@ if model:
                 
                 break
             
-            time.sleep(velocidad_sim)
+            # --- MEJORA: Sleep de seguridad ---
+            # En la nube, menos de 0.03s suele romper la comunicación WebSocket
+            time.sleep(max(velocidad_sim, 0.03))
 
 # --- SECCIÓN TÉCNICA (PIE DE PÁGINA) ---
 st.divider()
