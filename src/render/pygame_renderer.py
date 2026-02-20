@@ -43,7 +43,11 @@ class PygameRenderer:
             self.screen = pygame.display.set_mode((width, height))
         self.clock = pygame.time.Clock()
         self.geometry = CarGeometry()
-        self.font = pygame.font.SysFont("arial", 18)
+        # Fuente de seguridad por si el servidor no tiene Arial
+        try:
+            self.font = pygame.font.SysFont("arial", 18)
+        except:
+            self.font = pygame.font.Font(None, 24)
 
     @staticmethod
     def _rotate_point(point: Point, angle: float) -> Point:

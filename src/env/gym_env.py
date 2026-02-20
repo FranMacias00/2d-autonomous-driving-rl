@@ -159,18 +159,11 @@ class DrivingEnv(gym.Env):
         if truncated and not terminated:
             event = "timeout"
 
-        # --- BLOQUE DE PRINTS DE DIAGNÓSTICO ---
-        if terminated or truncated:
-            print(f"\n--- DEBUG EPISODIO FINALIZADO ---")
-            print(f"¿Detección off_track?: {off_track}")
-            print(f"¿Detección finish?: {finish}")
-            print(f"Evento asignado en info: {event}")
-            print(f"Recompensa de este último paso: {reward:.2f}")
-            print(f"Velocidad actual: {self.car.velocity:.2f}")
-            print(f"Posición morro (front_new): {front_new}")
-            print(f"----------------------------------")
-
-        info = {"event": event}
+        info = {
+            "event": event,
+            "dist_to_finish": dist_to_finish,
+            "velocity": self.car.velocity
+        }
         observation = self._get_observation()
 
         if self.render_mode == "human":

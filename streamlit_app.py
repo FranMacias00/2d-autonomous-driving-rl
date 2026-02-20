@@ -1,5 +1,4 @@
 import streamlit as st
-import gymnasium as gym
 from src.env.gym_env import DrivingEnv
 from stable_baselines3 import PPO
 import time
@@ -51,8 +50,8 @@ if model:
                 max_vel_alcanzada = env.car.velocity
             
             # --- MEJORA: Renderizado optimizado para la nube ---
-            # Renderizamos 1 de cada 3 pasos para evitar saturar el servidor (KeyError)
-            if step % 3 == 0:
+            # Renderizamos 1 de cada 5 pasos para evitar saturar el servidor (KeyError)
+            if step % 5 == 0:
                 frame = env.render(show_sensors=mostrar_sensores)
                 if frame is not None:
                     placeholder.image(frame, channels="RGB", width="stretch")
@@ -91,7 +90,7 @@ if model:
             
             # --- MEJORA: Sleep de seguridad ---
             # En la nube, menos de 0.03s suele romper la comunicación WebSocket
-            time.sleep(max(velocidad_sim, 0.03))
+            time.sleep(max(velocidad_sim, 0.07))
 
 # --- SECCIÓN TÉCNICA (PIE DE PÁGINA) ---
 st.divider()
@@ -103,3 +102,5 @@ st.info("""
 * **Algoritmo:** PPO (Proximal Policy Optimization)
 * **Detección:** Ray Casting (7 sensores a 120°)
 """)
+st.divider()
+st.caption("Desarrollado por **Francisco Javier Macías Villaécija**")
