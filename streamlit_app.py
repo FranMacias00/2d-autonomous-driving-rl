@@ -51,8 +51,8 @@ if model:
                 max_vel_alcanzada = env.car.velocity
             
             # --- MEJORA: Renderizado optimizado para la nube ---
-            # Renderizamos 1 de cada 5 pasos para evitar saturar el servidor (KeyError)
-            if step % 5 == 0:
+            # Renderizamos 1 de cada 3 pasos para evitar saturar el servidor (KeyError)
+            if step % 3 == 0:
                 frame = env.render(show_sensors=mostrar_sensores)
                 if frame is not None:
                     placeholder.image(frame, channels="RGB", width="stretch")
@@ -91,7 +91,7 @@ if model:
             
             # --- MEJORA: Sleep de seguridad ---
             # En la nube, menos de 0.03s suele romper la comunicación WebSocket
-            time.sleep(max(velocidad_sim, 0.07))
+            time.sleep(max(velocidad_sim, 0.03))
 
 # --- SECCIÓN TÉCNICA (PIE DE PÁGINA) ---
 st.divider()
