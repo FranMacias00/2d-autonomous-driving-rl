@@ -81,7 +81,7 @@ if model:
 
                 # --- CUADRO DE MÉTRICAS SINCRONIZADO ---
                 col1, col2, col3, col4 = st.columns(4)
-                col1.metric("Pasos Reales", f"{env.steps}")
+                col1.metric("Pasos", f"{env.steps}")
                 col2.metric("Recompensa Media", f"{np.mean(recompensas):.2f}")
                 col3.metric("Vel. Máxima", f"{max_vel_alcanzada:.1f} px/s")
                 col4.metric("Tiempo Sim.", f"{time.time() - start_time:.1f}s")

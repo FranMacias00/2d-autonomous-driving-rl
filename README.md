@@ -1,11 +1,13 @@
-# 1. Descripción general del proyecto
+# 2D Autonomous Driving with Reinforcement Learning (PPO)
+
+## 1. Descripción general del proyecto
 
 Este repositorio implementa un sistema de **conducción autónoma 2D** donde un agente aprende a conducir en una pista generada procedimentalmente usando **Aprendizaje por Refuerzo (Reinforcement Learning)**.
 
 El objetivo del sistema es que el vehículo:
-- avance por la carretera sin salirse,
-- evite colisiones,
-- y alcance la meta en un número limitado de pasos.
+- Avance por la carretera sin salirse.
+- Evite colisiones.
+- Alcance la meta en un número limitado de pasos.
 
 El problema que resuelve es la toma de decisiones de control continuo en un entorno dinámico: el agente debe elegir, en cada paso, valores de **aceleración** y **giro** para mantener estabilidad, progresar y terminar el circuito.
 
@@ -18,58 +20,40 @@ De forma resumida, el proceso de aprendizaje implementado en el código es:
 4. El entorno simula cinemática, detecta colisiones/meta/timeout y calcula recompensa.
 5. PPO actualiza la política con los datos acumulados hasta mejorar el comportamiento.
 
-# 2. Stack tecnológico utilizado
+## 2. Stack tecnológico utilizado
 
-## Lenguaje principal
+### Lenguaje principal
 - **Python**.
 
-## Librerías principales detectadas
+### Librerías principales detectadas
 - **Gymnasium (`gymnasium==1.2.3`)**: interfaz del entorno RL, espacios de acción/observación y ciclo `reset/step`.
 - **Pygame (`pygame==2.6.1`)**: renderizado 2D, simulación visual, utilidades de fuente/superficie y soporte de ejecución interactiva.
-- **Stable-Baselines3 (`stable_baselines3==2.7.1`)**: implementación de PPO usada para entrenamiento y evaluación.
+- **Stable-Baselines3 (SB3) (`stable_baselines3==2.7.1`)**: implementación de PPO usada para entrenamiento y evaluación.
 - **PyTorch (`torch==2.10.0`)**: backend de cómputo para SB3.
 - **Streamlit (`streamlit==1.54.0`)**: interfaz de evaluación visual del modelo entrenado.
 - **NumPy (`numpy==2.2.6`)**: operaciones numéricas de observaciones y normalización.
 
-## Dependencias adicionales declaradas
-- `Shimmy==2.0.0`
-- `pillow==12.1.0`
-- `opencv-python-headless==4.13.0.92`
+## 3. Instalación y ejecución
 
-## Paquetes de sistema declarados
-(archivo `packages.txt`, útiles en despliegues cloud para Pygame):
-- `libsdl2-dev`
-- `libsdl2-image-dev`
-- `libsdl2-mixer-dev`
-- `libsdl2-ttf-dev`
-- `libfreetype6-dev`
-- `libportmidi-dev`
-- `libjpeg-dev`
-- `xvfb`
+Clona el proyecto y crea un entorno virtual.
 
-# 3. Instalación y ejecución
+### Requisitos previos
+- Python 3.10 o superior.
+- Gestor de paquetes `pip`.
 
-## Requisitos previos
-- Python 3.x (no se fija versión explícita en el repositorio).
-- `pip`.
-- Dependencias de sistema para SDL/Pygame (si aplica a tu entorno).
-
-## Instalación de dependencias
+### Instalación de dependencias
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Si ejecutas en entorno Linux minimalista (por ejemplo, despliegue web), instala también paquetes del sistema equivalentes a `packages.txt`.
+En sistemas Linux, puede ser necesario instalar las dependencias del sistema requeridas por Pygame, listadas en `packages.txt`.
 
-## Configuración necesaria
-No hay archivo `.env` ni variables obligatorias definidas en el proyecto.
-
-Solo debes considerar:
+### Modelos y almacenamiento
 - Para evaluación con scripts y Streamlit, el repositorio incluye un modelo en la raíz: `modelo_entrenado.zip`.
 - El script de entrenamiento guarda nuevos modelos en `models/` y logs en `logs/`.
 
-## Cómo ejecutar el entorno (modo interactivo manual)
+### Cómo ejecutar el entorno (modo interactivo manual)
 
 ```bash
 python -m src.scripts.run_interactive
@@ -81,45 +65,43 @@ Controles implementados:
 - `R`: generar nueva pista/episodio.
 - `ESC`: salir.
 
-## Cómo lanzar el entrenamiento PPO
+### Cómo lanzar el entrenamiento PPO
 
 ```bash
 python -m src.scripts.train_ppo
 ```
 
 Comportamiento real del script:
-- crea carpetas `models/` y `logs/` si no existen,
-- entrena PPO con `total_timesteps=300000`,
-- guarda modelo con nombre dinámico tipo `ppo_driving_car_v6_<timestamp>`,
-- ejecuta una fase visual posterior de 5 episodios en `render_mode="human"`.
+- Crea carpetas `models/` y `logs/` si no existen.
+- Entrena PPO con `total_timesteps=300000`.
+- Guarda modelo con nombre dinámico tipo `ppo_driving_car_<version>_<timestamp>`.
+- Ejecuta una fase visual posterior de 5 episodios en `render_mode="human"`.
 
-## Cómo evaluar un modelo entrenado
-
-Evaluación visual de consola + ventana Pygame (usa `modelo_entrenado.zip`):
+### Cómo evaluar un modelo entrenado
+Evaluación visual de consola + ventana Pygame (por defecto `modelo_entrenado.zip`):
 
 ```bash
 python -m src.scripts.eval_ppo
 ```
 
-Smoke test del entorno con acciones aleatorias:
+### Despliegue en Streamlit Cloud
 
-```bash
-python -m src.scripts.check_env
-```
+Este proyecto se encuentra desplegado en **Streamlit Cloud**, lo que permite acceder al simulador de conducción autónoma directamente desde el navegador, sin necesidad de instalación local.
 
-## Cómo iniciar la aplicación Streamlit
+**Acceso al simulador:**
 
-```bash
-streamlit run streamlit_app.py
-```
+https://2d-autonomous-driving-rl.streamlit.app/
 
-La app:
-- carga `DrivingEnv(render_mode="rgb_array")`,
-- intenta cargar `modelo_entrenado.zip`,
-- simula hasta 1500 pasos y muestra métricas (pasos, recompensa media, velocidad máxima, tiempo de simulación),
-- permite activar/desactivar visualización de sensores.
+A través de esta plataforma es posible:
 
-# 4. Estructura del proyecto
+- Visualizar la simulación del modelo PPO previamente entrenado.
+- Analizar métricas de rendimiento en tiempo real.
+- Observar el funcionamiento del sistema de sensores por ray casting.
+- Evaluar el comportamiento autónomo del vehículo en el entorno 2D.
+
+El despliegue en la nube facilita la demostración pública del proyecto y su evaluación remota sin requerir configuración adicional.
+
+## 4. Estructura del proyecto
 
 ```text
 2d-autonomous-driving-rl/
@@ -149,7 +131,7 @@ La app:
         └── check_env.py
 ```
 
-## Explicación de componentes clave
+### Explicación de componentes clave
 
 - **Entorno personalizado (`src/env/gym_env.py`)**
   - Define `DrivingEnv` (API Gymnasium).
@@ -165,40 +147,45 @@ La app:
 - **Script de entrenamiento (`src/scripts/train_ppo.py`)**
   - Configura hiperparámetros PPO.
   - Ejecuta aprendizaje.
-  - Guarda modelo y muestra evaluación humana posterior.
+  - Guarda modelo y ejecuta una demostración visual post-entrenamiento.
 
 - **Script de evaluación (`src/scripts/eval_ppo.py`)**
   - Carga `modelo_entrenado.zip`.
   - Corre episodios de evaluación con render humano.
   - Imprime motivo de finalización (`finish`, `off_track`, `timeout`).
+  - Es posible evaluar cualquier modelo generado durante el entrenamiento (ubicados en la carpeta models/) modificando la variable `MODEL_PATH` en la parte superior del archivo `eval_ppo.py`.
 
 - **Interfaz Streamlit (`streamlit_app.py`)**
   - Dashboard para reproducir el agente entrenado con métricas y visualización en tiempo real.
 
-- **Carpeta/modelos guardados**
-  - Existe un modelo preentrenado en la raíz: `modelo_entrenado.zip`.
-  - El entrenamiento genera modelos adicionales en `models/` (creada en ejecución).
+- **Persistencia de modelos**
+  - **Modelo de referencia**: Se incluye un modelo preentrenado en la raíz del proyecto bajo el nombre `./modelo_entrenado.zip`.
+  - **Directorios de salida**: El proceso de entrenamiento genera y almacena modelos adicionales en el directorio `./models/` (creado automáticamente durante la ejecución).
 
-# 5. Funcionalidades principales
+## 5. Funcionalidades principales
 
-## Simulación del entorno 2D
+### Simulación del entorno 2D
 - Cinemática del vehículo basada en aceleración, drag, límite de velocidad y orientación angular.
 - Representación top-down con chasis, cabina y ruedas en Pygame.
 
-## Generación procedimental de pista
+### Generación procedimental de pista
 - La pista se define por una **línea central sinusoidal** con parámetros aleatorios (amplitud y número de ondas), acotada por márgenes del mapa.
 - Desde esa línea central se calculan bordes izquierdo/derecho con normales geométricas.
 
-## Sistema de sensores por ray casting
+### Sistema de sensores por ray casting
 - `SensorSuite` lanza **7 rayos** en un abanico de **120°** desde la parte frontal del coche.
 - Cada rayo calcula la intersección más cercana con los bordes de la carretera.
 - Las distancias se normalizan para construir la observación del agente.
 
-## Implementación de PPO
-- PPO se usa con `MlpPolicy` y parámetros explícitos en el script de entrenamiento (`learning_rate=0.0003`, `n_steps=2048`, `batch_size=64`).
-- El agente aprende política de control continuo para velocidad y giro.
+### Implementación de PPO
+- Se utiliza el algoritmo PPO (Proximal Policy Optimization) con una arquitectura de red neuronal `MlpPolicy` (Multi-layer Perceptron).
+- Configuración de hiperparámetros:
+  - `learning_rate=0.0003`: Tasa de aprendizaje moderada para asegurar una convergencia estable.
+  - `n_steps=2048`: Tamaño de la ventana de experiencia recolectada antes de cada actualización.
+  - `batch_size=64`: Número de muestras por cada paso de optimización del gradiente.
+- El agente optimiza una política de control continuo, aprendiendo a modular de forma fluida la aceleración y el ángulo de giro.
 
-## Sistema de recompensas
+### Sistema de recompensas
 La lógica de recompensa/fin de episodio del entorno incluye:
 - **+150** al cruzar meta (`finish`).
 - **-30** por salida de pista lejos de meta (`off_track`).
@@ -206,11 +193,23 @@ La lógica de recompensa/fin de episodio del entorno incluye:
 - Penalización por baja velocidad (`-0.1`) o recompensa proporcional al avance cuando circula sobre pista.
 - Truncamiento por límite de pasos (`1500`, evento `timeout`).
 
-## Entrenamiento del agente
-- Script dedicado para entrenamiento con PPO y guardado de modelos versionados.
-- Soporte de logs para TensorBoard (`tensorboard_log="./logs/"`).
+### Entrenamiento del agente
+- **Script de entrenamiento optimizado**: Permite el aprendizaje del agente con PPO y gestiona el versionado automático de los modelos guardados para evitar la pérdida de progresos.
+- **Monitorización con TensorBoard**: El sistema genera logs detallados en el directorio `./logs/`, permitiendo visualizar en tiempo real métricas críticas como la evolución de la recompensa media, la pérdida de la red neuronal (loss) y la duración de los episodios.
 
-## Evaluación y visualización interactiva
-- Evaluación local con Pygame (`eval_ppo.py`).
-- Simulador manual interactivo (`run_interactive.py`) para inspección del entorno.
-- Interfaz Streamlit (`streamlit_app.py`) con render `rgb_array`, control de velocidad de simulación y métricas de desempeño.
+### Visualización de métricas
+Para analizar la evolución del aprendizaje en tiempo real, abre una terminal y ejecuta:
+
+```bash
+tensorboard --logdir ./logs/
+```
+
+Tras ejecutarlo, accede desde tu navegador a: http://localhost:6006/
+
+#### Métricas clave a observar:
+
+- `rollout/ep_rew_mean`: Indica el rendimiento global del agente. Representa la recompensa media acumulada por episodio, una tendencia ascendente es el principal indicador de que el agente está aprendiendo la tarea.
+
+- `train/entropy_loss`: Refleja el nivel de exploración de la política. Una disminución progresiva indica que el agente reduce la aleatoriedad en sus acciones, pasando de una fase exploratoria inicial a una estrategia de conducción más definida y determinista.
+
+- `train/explained_variance`: Mide la estabilidad y calidad del modelo. Cuanto más cerca esté de **1**, más predecibles y sólidos son los movimientos del agente, lo que significa que la red neuronal entiende correctamente las consecuencias de sus acciones.
