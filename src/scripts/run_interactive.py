@@ -65,7 +65,7 @@ def reset_scenario(car: Car):
 
 def main() -> int:
     pygame.init()
-    renderer = PygameRenderer(width=WINDOW_WIDTH, height=WINDOW_HEIGHT)
+    renderer = PygameRenderer(width=WINDOW_WIDTH, height=WINDOW_HEIGHT, render_mode="human")
     pygame.display.set_caption(WINDOW_TITLE)
 
     # Inicialización del primer episodio
